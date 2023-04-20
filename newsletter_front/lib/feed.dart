@@ -74,6 +74,7 @@ class FeedViewState extends State<FeedView> {
       child: GridView.builder(
         controller: scrollController,
         itemCount: viewModel.newsList.length + (isLoadingMore ? 1 : 0),
+        
         itemBuilder: (context, index) {
           if (index == viewModel.newsList.length && isLoadingMore) {
             // Exibe o indicador de progresso no final da lista
@@ -134,16 +135,16 @@ class FeedViewState extends State<FeedView> {
     void onScroll() {
       if (scrollController.position.pixels ==
               scrollController.position.maxScrollExtent &&
-          !isLoadingMore && viewModel.hasMoreNews) {
+          !isLoadingMore) {
         loadMoreNews();
       }
     }
 
     //Carrega novas notícias no feed
     Future<void> loadMoreNews() async {
-        if (!viewModel.hasMoreNews) {
-          return;
-        }
+        // if (!viewModel.hasMoreNews) {
+        //   return;
+        // }
 
       setState(() {
         isLoadingMore = true;
@@ -156,18 +157,10 @@ class FeedViewState extends State<FeedView> {
         });
         //Se ainda tiver novas notícias, adiciona no feed
         if (newNews.isNotEmpty) {
-          await Future.delayed(const Duration(seconds: 2));
+          await Future.delayed(const Duration(microseconds: 500));
           viewModel.addNews(newNews);
-        }else{
-            isLoadingMore = false;
         }
-      } else {
-        setState(() {
-          isLoadingMore = false;
-      });
-      }
-      
-      
+      }      
       
     }
 
@@ -175,8 +168,9 @@ class FeedViewState extends State<FeedView> {
     Future<void> onRefresh() async {
       viewModel.resetCurrentPage();
       final newNews = await viewModel.fetchNews();
-      if (mounted) {
+      if (context.mounted) {
         viewModel.replaceNews(newNews);
+        //isLoadingMore = true;
         refreshController.refreshCompleted();
       }
     }
@@ -209,11 +203,13 @@ class FeedViewModel with ChangeNotifier {
 
       //Busca novas notícias na lista de notícias
       Future<List<News>> fetchNews() async {
+        print("before fetchNews: $currentPage");
         final news = await newsRepository.fetchNews(
           page: currentPage, pageSize: pageSize);
           if (news.length < pageSize) {
             hasMoreNews = false;
           }
+          print("after fetchNews: $currentPage");
         currentPage += 1;
         return news;
       }
@@ -233,7 +229,7 @@ class FeedViewModel with ChangeNotifier {
       //Reseta a para a página 1
       void resetCurrentPage() {
         currentPage = 1;
-        
+        notifyListeners();
       }
 
 
