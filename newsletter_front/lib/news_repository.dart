@@ -1,5 +1,6 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
-import 'package:flutter/services.dart';
 import 'news_model.dart';
 
 
@@ -26,18 +27,24 @@ import 'news_model.dart';
 // }
 
 import 'package:http/http.dart' as http;
-import 'news_model.dart';
+
 
 class NewsRepository {
-  static const String BASE_URL = 'http://backend:8080/noticia';  // Coloque o URL base do seu servidor aqui
+  //static const String BASE_URL = 'http://backend:8080/noticia';  // Coloque o URL base do seu servidor aqui
+  static const String BASE_URL = 'http://10.0.2.2:8080/noticia';  // Coloque o URL base do seu servidor aqui
+  // static const String BASE_URL = 'http://192.168.0.4:8080/noticia';  // Coloque o URL base do seu servidor aqui
+  
 
   Future<List<News>> fetchNews({required int page, required int pageSize}) async {
     final response = await http.get(Uri.parse('$BASE_URL/getnews/$page'));
 
     if (response.statusCode == 200) {
-      final jsonData = jsonDecode(response.body);
-      final List<dynamic> jsonArr = jsonData['news'];
-      return jsonArr.map((json) => News.fromJson(json)).toList();
+      final decodedData = utf8.decode(response.bodyBytes);
+      final jsonData = jsonDecode(decodedData);
+      final List<dynamic> jsonArr = jsonData['content'];
+      List<News> newsList = jsonArr.map((json) => News.fromJson(json)).toList();
+      print(newsList[0].title);
+      return newsList;
     } else {
       throw Exception('Erro ao buscar notícias');
     }
@@ -48,10 +55,13 @@ class NewsRepository {
 
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
+
+      // Retornar a instância de News com a imagem decodificada
       return News.fromJson(jsonData);
     } else {
       throw Exception('Erro ao buscar notícia');
     }
   }
+
 
 }

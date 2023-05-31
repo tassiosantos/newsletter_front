@@ -37,12 +37,12 @@ class FeedViewState extends State<FeedView> {
     super.initState();
     viewModel = Provider.of<FeedViewModel>(context, listen: false);
     viewModel.fetchNews(1).then((news) {
-      if (news != null && mounted) {
+      viewModel.currentPage += 1;
+      if (mounted) {
         viewModel.addNews(news);
       }
     }).catchError((error) {
-      print("page error");
-    });;
+    });
     scrollController.addListener(onScroll);
   }
 
@@ -97,8 +97,9 @@ class FeedViewState extends State<FeedView> {
                         Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
-                            child: Image.network(
-                              news.imagePath,
+                            child: Image.memory(
+                              
+                              news.image!,
                               fit: BoxFit.cover,
                               width: double.infinity,
                             ),
@@ -168,6 +169,7 @@ class FeedViewState extends State<FeedView> {
     Future<void> onRefresh() async {
       viewModel.currentPage = 1;
       final newNews = await viewModel.fetchNews(viewModel.currentPage);
+
       if (context.mounted) {
         viewModel.replaceNews(newNews);
         //isLoadingMore = true;
@@ -203,13 +205,11 @@ class FeedViewModel with ChangeNotifier {
 
       //Busca novas notícias na lista de notícias
       Future<List<News>> fetchNews(int page) async {
-        print("before fetchNews: $page");
         final news = await newsRepository.fetchNews(
           page: page, pageSize: pageSize);
           if (news.length < pageSize) {
             hasMoreNews = false;
           }
-          print("after fetchNews: $page");
         return news;
       }
 
